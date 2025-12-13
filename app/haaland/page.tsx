@@ -9,30 +9,40 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect, useState } from "react";
+
+type DataPoint = {
+  fixture: string;
+  score: number;
+};
 
 export default function HaalandPage() {
-  // Convert fixture date → short readable label
-  const rawData = [
-    {
-      fixture: "2024-02-05T20:00:00+00:00",
-      score: 68,
-    },
-  ];
+  const [data, setData] = useState<DataPoint[]>([]);
 
-  const data = rawData.map((match) => ({
-    ...match,
-    // Format date for the graph
-    dateLabel: new Date(match.fixture).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
-  }));
+  useEffect(() => {
+    fetch("/api/haaland")
+      .then((res) => res.json())
+      .then((json) => {
+        const formatted = json.timeline.map(
+          (d: DataPoint) => ({
+            ...d,
+            dateLabel: new Date(d.fixture).toLocaleDateString(
+              "en-US",
+              { month: "short", day: "numeric" }
+            ),
+          })
+        );
+        setData(formatted);
+      });
+  }, []);
 
   return (
     <div className="p-10">
-      <h1 className="text-3xl font-bold mb-6">Haaland Performance</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Haaland Performance
+      </h1>
 
-      <div className="w-full h-100 bg-white p-4 rounded shadow">
+      <div className="w-full h-105 bg-white rounded shadow p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -44,6 +54,7 @@ export default function HaalandPage() {
               dataKey="score"
               stroke="#22c55e"
               strokeWidth={3}
+              dot={{ r: 4 }}
             />
           </LineChart>
         </ResponsiveContainer>
