@@ -5,53 +5,55 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useState } from "react";
 
-type DataPoint = {
-  fixture: string;
-  score: number;
-};
-
 export default function HaalandPage() {
-  const [data, setData] = useState<DataPoint[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     fetch("/api/haaland")
       .then((res) => res.json())
       .then((json) => {
-        const formatted = json.timeline.map(
-          (d: DataPoint) => ({
-            ...d,
-            dateLabel: new Date(d.fixture).toLocaleDateString(
-              "en-US",
-              { month: "short", day: "numeric" }
-            ),
-          })
-        );
+        const formatted = json.timeline.map((d: any) => ({
+          ...d,
+          label: new Date(d.date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+        }));
         setData(formatted);
       });
   }, []);
 
   return (
     <div className="p-10">
-      <h1 className="text-3xl font-bold mb-6">
-        Haaland Performance
+      <h1 className="text-3xl font-bold mb-2">
+        Haaland — Ballon d’Or On-Track Index
       </h1>
+      <p className="text-gray-500 mb-6">
+        Season-to-date performance trajectory
+      </p>
 
-      <div className="w-full h-105 bg-white rounded shadow p-4">
+      <div className="w-full h-105 bg-white p-4 rounded shadow">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="dateLabel" />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
+            <XAxis dataKey="label" />
+            <YAxis />
+            <Tooltip
+              formatter={(value, _, props) => {
+                const d = props.payload;
+                return [
+                  `Index: ${d.index} (${d.delta > 0 ? "+" : ""}${d.delta})`,
+                  d.reasons.join(" · "),
+                ];
+              }}
+            />
             <Line
               type="monotone"
-              dataKey="score"
+              dataKey="index"
               stroke="#22c55e"
               strokeWidth={3}
               dot={{ r: 4 }}
